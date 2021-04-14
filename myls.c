@@ -260,7 +260,7 @@ Queue* listDirectories(Queue* dirQueue, Queue** myInfoQueueRef) {
 	DIR* dir;
 	struct dirent* entity;
 	Queue* childDir = createQueue();
-	char path[100];
+	char path[2048];
 	struct stat sb;
 	struct Info* dirInfo;
 
@@ -301,7 +301,7 @@ Queue* listDirectories(Queue* dirQueue, Queue** myInfoQueueRef) {
 				myInfo->inodeNum = sb.st_ino;
 				myInfo->linkNum = sb.st_nlink;
 				myInfo->modTime = sb.st_mtim;
-				myInfo->name = entity->d_name;
+				myInfo->name = strdup(entity->d_name);
 				myInfo->size = sb.st_size;
 				myInfo->userName = strdup(userName->pw_name);
 				myInfo->groupName = strdup(groupName->gr_name);
@@ -316,7 +316,7 @@ Queue* listDirectories(Queue* dirQueue, Queue** myInfoQueueRef) {
 				}
 			}
 			entity = readdir(dir);
-			bzero(path, 100);
+			bzero(path, 2048);
 		}
 	}
 	return childDir;
@@ -377,12 +377,12 @@ bool lexicographicalCompare(char* a, char* b) {
 			j+=1;
 			continue;
 		}
-		if(a[i] == '.') {
+		if(a[i] == '.' || a[i] == '_' || a[i] == '-') {
 			if(i+1 < strlen(a)) {
 				i += 1;
 			}
 		}
-		if(b[j] == '.') {
+		if(b[j] == '.' || b[j] == '_' || b[j] == '-') {
 			if(j+1 < strlen(b)) {
 				j += 1;
 			}
