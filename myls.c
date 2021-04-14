@@ -138,6 +138,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	}
+
 	if(!isEmpty(goodFileQueue)) {
 		listFiles(goodFileQueue);
 		//add empty line if there are directories
@@ -145,11 +146,13 @@ int main(int argc, char *argv[]) {
 			printf("\n");
 		}
 	}
+	if(!isEmpty(goodDirQueue)) {
 		listDirByRecursion(goodDirQueue);
-		free(optionsQueue);
-		free(fileListQueue);
-		free(goodDirQueue);
-		free(goodFileQueue);
+	}
+	free(optionsQueue);
+	free(fileListQueue);
+	free(goodDirQueue);
+	free(goodFileQueue);
 	return 0;
 }
 
@@ -276,7 +279,7 @@ Queue* listDirectories(Queue* dirQueue, Queue** myInfoQueueRef) {
 	DIR* dir;
 	struct dirent* entity;
 	Queue* childDir = createQueue();
-	char path[2048];
+	char path[1024];
 	struct stat sb;
 	struct Info* dirInfo;
 
@@ -332,7 +335,7 @@ Queue* listDirectories(Queue* dirQueue, Queue** myInfoQueueRef) {
 				}
 			}
 			entity = readdir(dir);
-			bzero(path, 2048);
+			bzero(path, 1024);
 		}
 		free(dirInfo->name);
 		free(dirInfo);
@@ -501,7 +504,4 @@ Node* Merge(Node* left, Node* right) {
 			merged->next = Merge(left, right->next);
 		}
 	return merged;
-
-
-	return NULL;
 }
