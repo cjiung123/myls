@@ -24,6 +24,7 @@ struct Info {
 	char* groupName;
 	char* userName;
 };
+
 Queue* myInfoQueue;
 Queue* goodFileQueue;
 Queue* goodDirQueue;
@@ -38,15 +39,14 @@ int linkNumSpec = 0;
 int userNameSpec = 0;
 int groupNameSpec = 0;
 int sizeSpec = 0;
+
 void listFiles();
 void listDirectories();
 void MergeSort(Node** headRef);
 Node* Merge(Node* left, Node* right);
 void SplitSubLists(Node* src, Node** leftRef, Node** rightRef);
-
+void listDirByRecursion(Queue* fileListQueue);
 int main(int argc, char *argv[]) {
-
-
 
 	Queue* optionsQueue = createQueue();
 	Queue* fileListQueue = createQueue();
@@ -91,8 +91,13 @@ int main(int argc, char *argv[]) {
 	}
 	//printf("i: %d, l: %d, R: %d\n", option_i, option_l, option_R);
 
-	char* fileList;
+	listDirByRecursion(fileListQueue);
 
+
+	return 0;
+}
+void listDirByRecursion(Queue* fileListQueue) {
+	char* fileList;
 	goodFileQueue = createQueue();
 	goodDirQueue = createQueue();
 	if(isEmpty(fileListQueue)) {
@@ -167,8 +172,6 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-
-	return 0;
 }
 
 void listFiles() {
