@@ -44,6 +44,9 @@ void MergeSort(Node** headRef);
 Node* Merge(Node* left, Node* right);
 void SplitSubLists(Node* src, Node** leftRef, Node** rightRef);
 void listDirByRecursion(Queue* dirQueue);
+void printInodeNum(struct Info* info);
+void printLongList(struct Info* info);
+char* setPermissions(mode_t mode);
 int main(int argc, char *argv[]) {
 
 	Queue* optionsQueue = createQueue();
@@ -120,6 +123,15 @@ int main(int argc, char *argv[]) {
 				//printf("Link: %s\n", fileList);
 			}
 			else {
+				struct passwd* userName = getpwuid(sb.st_uid);
+				struct group* groupName = getgrgid(sb.st_gid);
+				info->permissions = setPermissions(sb.st_mode);
+				info->inodeNum = sb.st_ino;
+				info->linkNum = sb.st_nlink;
+				info->userName = strdup(userName->pw_name);
+				info->groupName = strdup(groupName->gr_name);
+				info->size = sb.st_size;
+				info->modTime = sb.st_mtim;
 				info->name = fileList;
 				Enqueue(goodFileQueue, info);
 				//printf("file: %s\n", fileList);
@@ -137,6 +149,24 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
+void printInodeNum(struct Info* info) {
+	printf("%*ju ", inodeNumSpec, info->inodeNum);
+}
+
+void printLongList(struct Info* info) {
+	char month[10];
+	char time[10];
+	printf("%10s ", info->permissions);
+	printf("%*ju ", linkNumSpec, (uintmax_t)info->linkNum);
+	printf("%-*s ", userNameSpec, info->userName);
+	printf("%-*s ", groupNameSpec, info->groupName);
+	printf("%*ju ", sizeSpec, (uintmax_t)info->size);
+	struct tm *t = localtime((time_t *) &info->modTime);
+	strftime(month, 10, "%b", t);
+	strftime(time, 10, "%H:%M", t);
+	printf("%s %2d %4d %s ", month, t->tm_mday, t->tm_year+1900, time);
+}
+
 void listDirByRecursion(Queue* dirQueue) {
 
 	Queue* childDir;
@@ -148,21 +178,10 @@ void listDirByRecursion(Queue* dirQueue) {
 		struct Info* info;
 		while((info = Dequeue(myInfoQueue)) != NULL) {
 			if(option_i) {
-				//printf("spec: %d\n", inodeNumSpec);
-				printf("%*ju ", inodeNumSpec, info->inodeNum);
+				printInodeNum(info);
 			}
 			if(option_l) {
-				char month[10];
-				char time[10];
-				printf("%10s ", info->permissions);
-				printf("%*ju ", linkNumSpec, (uintmax_t)info->linkNum);
-				printf("%-*s ", userNameSpec, info->userName);
-				printf("%-*s ", groupNameSpec, info->groupName);
-				printf("%*ju ", sizeSpec, (uintmax_t)info->size);
-				struct tm *t = localtime((time_t *) &info->modTime);
-				strftime(month, 10, "%b", t);
-				strftime(time, 10, "%H:%M", t);
-				printf("%s %2d %4d %s ", month, t->tm_mday, t->tm_year+1900, time);
+				printLongList(info);
 			}
 			printf("%s\n", info->name);
 		}
@@ -173,10 +192,8 @@ void listDirByRecursion(Queue* dirQueue) {
 				listDirByRecursion(childDir);
 			}
 		}
-		else {
-			if(!isEmpty(dirQueue)) {
-				printf("\n");
-			}
+		if(!isEmpty(dirQueue)) {
+			printf("\n");
 		}
 	}
 }
@@ -188,7 +205,12 @@ void listFiles(Queue* fileQueue) {
 
 	struct Info* fileInfo;
 	while((fileInfo = Dequeue(fileQueue)) != NULL) {
-		//implement option i, option l
+		if(option_i) {
+			printInodeNum(fileInfo);
+		}
+		if(option_l) {
+			printLongList(fileInfo);
+		}
 		printf("%s\n", fileInfo->name);
 	}
 
@@ -219,6 +241,19 @@ char* setPermissions(mode_t mode) {
 	return permArr;
 
 }
+void defineSpecifier(struct Info* info) {
+	char inodeNumStr[30];
+	char linkNumStr[10];
+	char sizeStr[30];
+	sprintf(sizeStr, "%ju", info->size);
+	sizeSpec = (strlen(sizeStr) > sizeSpec) ? strlen(sizeStr) : sizeSpec;
+	sprintf(inodeNumStr, "%ju", info->inodeNum);
+	inodeNumSpec = (strlen(inodeNumStr) > inodeNumSpec) ? strlen(inodeNumStr) : inodeNumSpec;
+	sprintf(linkNumStr, "%ju", info->linkNum);
+	linkNumSpec = (strlen(linkNumStr) > linkNumSpec) ? strlen(linkNumStr) : linkNumSpec;
+	userNameSpec = (strlen(info->userName) > userNameSpec) ? strlen(info->userName) : userNameSpec;
+	groupNameSpec = (strlen(info->groupName) > groupNameSpec) ? strlen(info->groupName) : groupNameSpec;
+}
 
 Queue* listDirectories(Queue* dirQueue, Queue** myInfoQueueRef) {
 	char *dirName;
@@ -228,6 +263,12 @@ Queue* listDirectories(Queue* dirQueue, Queue** myInfoQueueRef) {
 	char path[100];
 	struct stat sb;
 	struct Info* dirInfo;
+
+	inodeNumSpec = 0;
+	linkNumSpec = 0;
+	userNameSpec = 0;
+	groupNameSpec = 0;
+	sizeSpec = 0;
 
 	QueueMergeSort(&dirQueue);
 	if((dirInfo = Dequeue(dirQueue)) != NULL) {
@@ -264,17 +305,8 @@ Queue* listDirectories(Queue* dirQueue, Queue** myInfoQueueRef) {
 				myInfo->size = sb.st_size;
 				myInfo->userName = strdup(userName->pw_name);
 				myInfo->groupName = strdup(groupName->gr_name);
-				char inodeNumStr[30];
-				char linkNumStr[10];
-				char sizeStr[30];
-				sprintf(sizeStr, "%ju", myInfo->size);
-				sizeSpec = (strlen(sizeStr) > sizeSpec) ? strlen(sizeStr) : sizeSpec;
-				sprintf(inodeNumStr, "%ju", myInfo->inodeNum);
-				inodeNumSpec = (strlen(inodeNumStr) > inodeNumSpec) ? strlen(inodeNumStr) : inodeNumSpec;
-				sprintf(linkNumStr, "%ju", myInfo->linkNum);
-				linkNumSpec = (strlen(linkNumStr) > linkNumSpec) ? strlen(linkNumStr) : linkNumSpec;
-				userNameSpec = (strlen(myInfo->userName) > userNameSpec) ? strlen(myInfo->userName) : userNameSpec;
-				groupNameSpec = (strlen(myInfo->groupName) > groupNameSpec) ? strlen(myInfo->groupName) : groupNameSpec;
+				defineSpecifier(myInfo);
+
 				Enqueue(*myInfoQueueRef, myInfo);
 				//printf("%s\n", myInfo->name);
 				if((sb.st_mode & S_IFMT) == S_IFDIR) {
@@ -290,6 +322,7 @@ Queue* listDirectories(Queue* dirQueue, Queue** myInfoQueueRef) {
 	return childDir;
 }
 void QueueMergeSort(Queue** q) {
+	if((*q)->front == NULL) return;
 	MergeSort(&(*q)->front);
 	Node* rear = (*q)->front;
 	while(rear->next != NULL) {
@@ -337,62 +370,74 @@ void SplitSubLists(Node* src, Node** leftRef, Node** rightRef) {
 bool lexicographicalCompare(char* a, char* b) {
 	//printf("a: %s\n", a);
 	//printf("b: %s\n", b);
+	int j = 0;
 	int minLen = (strlen(a) <= strlen(b)) ? strlen(a) : strlen(b);
 	for(int i=0; i<minLen; i++) {
-		if(a[i] == b[i]) {
+		if(a[i] == b[j]) {
+			j+=1;
 			continue;
 		}
-
-		if(isalpha(a[i]) && isalpha(b[i])) {
+		if(a[i] == '.') {
+			if(i+1 < strlen(a)) {
+				i += 1;
+			}
+		}
+		if(b[j] == '.') {
+			if(j+1 < strlen(b)) {
+				j += 1;
+			}
+		}
+		if(isalpha(a[i]) && isalpha(b[j])) {
 			bool isA = (a[i] >= 65 && a[i] <= 90) ? true : false;
-			bool isB = (b[i] >= 65 && b[i] <= 90) ? true : false;
+			bool isB = (b[j] >= 65 && b[j] <= 90) ? true : false;
 			if(isA && isB) {
-				if(a[i] + 32 < b[i] + 32) {
+				if(a[i] + 32 < b[j] + 32) {
 					return true;
 				}
-				else if(a[i] + 32 > b[i] + 32){
+				else if(a[i] + 32 > b[j] + 32){
 					return false;
 				}
 			}
 			else if(isA && !isB) {
-				if(a[i] + 32 < b[i]) {
+				if(a[i] + 32 < b[j]) {
 					return true;
 				}
-				else if(a[i] + 32 > b[i]) {
+				else if(a[i] + 32 > b[j]) {
 					return false;
 				}
 			}
 			else if(!isA && isB) {
-				if(a[i] < b[i] + 32) {
+				if(a[i] < b[j] + 32) {
 					return true;
 				}
-				else if(a[i] > b[i] + 32) {
+				else if(a[i] > b[j] + 32) {
 					return false;
 				}
 			}
 			else {//a and b both digit
-				if(a[i] < b[i]) {
+				if(a[i] < b[j]) {
 					return true;
 				}
-				else if(a[i] > b[i]) {
+				else if(a[i] > b[j]) {
 					 return false;
 				}
 			}
 		}
-		else if(isalpha(a[i]) && !isalpha(b[i])) {
+		else if(isalpha(a[i]) && !isalpha(b[j])) {
 			return false;
 		}
-		else if(!isalpha(a[i]) && isalpha(b[i])) {
+		else if(!isalpha(a[i]) && isalpha(b[j])) {
 			return true;
 		}
 		else {
-			if(a[i] < b[i]) {
+			if(a[i] < b[j]) {
 				return true;
 			}
-			else if(a[i] > b[i]){
+			else if(a[i] > b[j]){
 				return false;
 			}
 		}
+		j+=1;
 	}
 
 	if(strlen(a) == minLen && strlen(a) != strlen(b)) {
@@ -402,14 +447,16 @@ bool lexicographicalCompare(char* a, char* b) {
 		return false;
 	}
 	else {
+		j = 0;
 		for(int i=0; i<minLen; i++) {
 			//distinguish between capital letters
-			if(a[i] < b[i]) {
+			if(a[i] < b[j]) {
 				return false;
 			}
-			else if(a[i] > b[i]){
+			else if(a[i] > b[j]){
 				return true;
 			}
+			j+=1;
 		}
 	}
 	return NULL;
