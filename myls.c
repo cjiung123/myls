@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
 	goodDirQueue = createQueue();
 	if(isEmpty(fileListQueue)) {
 		struct Info* info = (struct Info*) malloc(sizeof(struct Info));
-		info->name = ".";
+		info->name = strdup(".");
 		Enqueue(goodDirQueue, info);
 	}
 	else {
@@ -111,13 +111,13 @@ int main(int argc, char *argv[]) {
 				continue;
 			}
 			if((sb.st_mode & S_IFMT) == S_IFDIR) {
-				info->name = fileList;
+				info->name = strdup(fileList);
 				Enqueue(goodDirQueue, info);
 				dirCount++;
 				//printf("Dir: %s\n", fileList);
 			}
 			else if((sb.st_mode & S_IFMT) == S_IFLNK) {
-				info->name = fileList;
+				info->name = strdup(fileList);
 				Enqueue(goodDirQueue, info);
 				dirCount++;
 				//printf("Link: %s\n", fileList);
@@ -132,7 +132,7 @@ int main(int argc, char *argv[]) {
 				info->groupName = strdup(groupName->gr_name);
 				info->size = sb.st_size;
 				info->modTime = sb.st_mtim;
-				info->name = fileList;
+				info->name = strdup(fileList);
 				Enqueue(goodFileQueue, info);
 				//printf("file: %s\n", fileList);
 			}
@@ -146,6 +146,10 @@ int main(int argc, char *argv[]) {
 		}
 	}
 		listDirByRecursion(goodDirQueue);
+		free(optionsQueue);
+		free(fileListQueue);
+		free(goodDirQueue);
+		free(goodFileQueue);
 	return 0;
 }
 
@@ -184,6 +188,11 @@ void listDirByRecursion(Queue* dirQueue) {
 				printLongList(info);
 			}
 			printf("%s\n", info->name);
+			free(info->permissions);
+			free(info->name);
+			free(info->userName);
+			free(info->groupName);
+			free(info);
 		}
 
 		if(option_R) {
@@ -196,6 +205,8 @@ void listDirByRecursion(Queue* dirQueue) {
 			printf("\n");
 		}
 	}
+	free(childDir);
+	free(myInfoQueue);
 }
 
 void listFiles(Queue* fileQueue) {
@@ -212,6 +223,11 @@ void listFiles(Queue* fileQueue) {
 			printLongList(fileInfo);
 		}
 		printf("%s\n", fileInfo->name);
+		free(fileInfo->name);
+		free(fileInfo->permissions);
+		free(fileInfo->userName);
+		free(fileInfo->groupName);
+		free(fileInfo);
 	}
 
 }
@@ -318,6 +334,9 @@ Queue* listDirectories(Queue* dirQueue, Queue** myInfoQueueRef) {
 			entity = readdir(dir);
 			bzero(path, 2048);
 		}
+		free(dirInfo->name);
+		free(dirInfo);
+		closedir(dir);
 	}
 	return childDir;
 }
