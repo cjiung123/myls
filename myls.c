@@ -47,6 +47,7 @@ void listDirByRecursion(Queue* dirQueue);
 void printInodeNum(struct Info* info);
 void printLongList(struct Info* info);
 char* setPermissions(mode_t mode);
+
 int main(int argc, char *argv[]) {
 
 	Queue* optionsQueue = createQueue();
@@ -134,6 +135,7 @@ int main(int argc, char *argv[]) {
 				info->modTime = sb.st_mtim;
 				info->name = strdup(fileList);
 				Enqueue(goodFileQueue, info);
+				dirCount++;
 				//printf("file: %s\n", fileList);
 			}
 		}
