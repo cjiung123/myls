@@ -24,7 +24,6 @@ struct Info {
 	char* groupName;
 	char* userName;
 };
-//Queue* myInfoQueue;
 
 int dirCount = 0;
 bool option_i = false;
@@ -37,16 +36,19 @@ int userNameSpec = 0;
 int groupNameSpec = 0;
 int sizeSpec = 0;
 
+void printInodeNum(struct Info* info);
+void printLongList(struct Info* info);
+void listDirByRecursion(Queue* dirQueue);
 void listFiles(Queue* fileQueue);
+char* setPermissions(mode_t mode);
+void defineSpecifier(struct Info* info);
 Queue* listDirectories(Queue* dirQueue, Queue** myInfoQueueRef);
 void QueueMergeSort(Queue** q);
 void MergeSort(Node** headRef);
-Node* Merge(Node* left, Node* right);
 void SplitSubLists(Node* src, Node** leftRef, Node** rightRef);
-void listDirByRecursion(Queue* dirQueue);
-void printInodeNum(struct Info* info);
-void printLongList(struct Info* info);
-char* setPermissions(mode_t mode);
+bool lexicographicalCompare(char* a, char* b);
+Node* Merge(Node* left, Node* right);
+
 
 int main(int argc, char *argv[]) {
 
@@ -234,7 +236,6 @@ void listFiles(Queue* fileQueue) {
 		free(fileInfo->groupName);
 		free(fileInfo);
 	}
-
 }
 
 char* setPermissions(mode_t mode) {
@@ -260,8 +261,8 @@ char* setPermissions(mode_t mode) {
 	permArr[10] = '\0';
 	//printf("permArr: %s\n", permArr);
 	return permArr;
-
 }
+
 void defineSpecifier(struct Info* info) {
 	char inodeNumStr[30];
 	char linkNumStr[10];
@@ -345,6 +346,7 @@ Queue* listDirectories(Queue* dirQueue, Queue** myInfoQueueRef) {
 	}
 	return childDir;
 }
+
 void QueueMergeSort(Queue** q) {
 	if((*q)->front == NULL) return;
 	MergeSort(&(*q)->front);
@@ -354,6 +356,7 @@ void QueueMergeSort(Queue** q) {
 	}
 	(*q)->rear = rear;
 }
+
 void MergeSort(Node** headRef) {
 	Node* head = *headRef;
 	Node* left;
@@ -485,6 +488,7 @@ bool lexicographicalCompare(char* a, char* b) {
 	}
 	return NULL;
 }
+
 Node* Merge(Node* left, Node* right) {
 	Node* merged = NULL;
 	if(left == NULL) {
